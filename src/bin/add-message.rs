@@ -41,8 +41,8 @@ async fn main_async() -> anyhow::Result<(), Error> {
             .xadd_maxlen(STREAM_KEY, StreamMaxlen::Approx(100000), "*", &fields)
             .await?;
 
-        println!("added message");
+        println!("added message with values {:?}", fields);
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_secs(2)).await;
     }
 }
