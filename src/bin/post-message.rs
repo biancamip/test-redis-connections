@@ -14,5 +14,12 @@ fn main() {
 }
 
 async fn main_async() -> anyhow::Result<(), Error> {
+    dotenv::dotenv().ok();
+
+    let redis_conn_str =
+        std::env::var("REDIS_CONNECTION_STRING").expect("Missing REDIS_CONNECTION_STRING");
+
+    println!("REDIS_CONNECTION_STRING {}", redis_conn_str);
+
     Ok(())
 }
