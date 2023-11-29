@@ -1,9 +1,10 @@
 use std::time::Duration;
 
 use anyhow::Error;
-use chrono::Utc;
-use redis::{streams::StreamMaxlen, AsyncCommands};
+use redis::{streams::StreamReadOptions, AsyncCommands};
 use test_redis_connections::STREAM_KEY;
+
+const GROUP: &str = "test-consumers";
 
 fn main() {
     let tokio_rt = tokio::runtime::Builder::new_multi_thread()
@@ -32,15 +33,13 @@ async fn main_async() -> anyhow::Result<(), Error> {
         .await
         .expect("Failed to get redis connection");
 
+    let read_options = StreamReadOptions::default().group(GROUP, "consumer1");
     loop {
-        let mut fields = vec![];
-        fields.push(("timestamp", Utc::now().timestamp_millis()));
-
         connection
-            .xadd_maxlen(STREAM_KEY, StreamMaxlen::Approx(100000), "*", &fields)
+            .xread_options(&[STREAM_KEY], &[">"], &read_options)
             .await?;
 
-        println!("added message");
+        println!("read message");
 
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
