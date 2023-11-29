@@ -1,7 +1,10 @@
 use std::time::Duration;
 
 use anyhow::Error;
-use redis::{streams::StreamReadOptions, AsyncCommands};
+use redis::{
+    streams::{StreamReadOptions, StreamReadReply},
+    AsyncCommands,
+};
 use test_redis_connections::STREAM_KEY;
 
 const GROUP: &str = "test-consumers";
@@ -33,16 +36,23 @@ async fn main_async() -> anyhow::Result<(), Error> {
         .await
         .expect("Failed to get redis connection");
 
-    let read_options = StreamReadOptions::default().group(GROUP, "consumer1");
+    let read_options = StreamReadOptions::default()
+        .count(1)
+        .group(GROUP, "consumer1")
+        .noack();
 
     println!("Starting loop");
     loop {
-        connection
+        let result: StreamReadReply = connection
             .xread_options(&[STREAM_KEY], &[">"], &read_options)
             .await?;
 
-        println!("read message");
+        for stream_key in result.keys {
+            for stream_id in stream_key.ids {
+                println!("read message with values: {:?}", stream_id.map.into_iter());
+            }
+        }
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_secs(3)).await;
     }
 }
