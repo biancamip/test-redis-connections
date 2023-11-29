@@ -1,4 +1,8 @@
+use std::time::Duration;
+
 use anyhow::Error;
+use chrono::Utc;
+use redis::{streams::StreamMaxlen, AsyncCommands};
 
 fn main() {
     let tokio_rt = tokio::runtime::Builder::new_multi_thread()
@@ -31,8 +35,22 @@ async fn main_async() -> anyhow::Result<(), Error> {
         .query_async(&mut connection)
         .await
         .expect("Failed to ping redis server");
-
     println!("{} should be PONG", result);
 
-    Ok(())
+    loop {
+        let mut fields = vec![];
+        fields.push(("timestamp", Utc::now().timestamp_millis()));
+
+        connection
+            .xadd_maxlen(
+                "test-connection-stream",
+                StreamMaxlen::Approx(100),
+                "*",
+                &fields,
+            )
+            .await?;
+        println!("msg posted");
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
 }
