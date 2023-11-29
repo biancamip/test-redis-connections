@@ -25,7 +25,7 @@ async fn main_async() -> anyhow::Result<(), Error> {
     let redis_conn_str =
         std::env::var("REDIS_CONNECTION_STRING").expect("Missing REDIS_CONNECTION_STRING");
 
-    println!("Running with REDIS_CONNECTION_STRING {}", redis_conn_str);
+    println!("REDIS_CONNECTION_STRING {}", redis_conn_str);
 
     let client = redis::Client::open(redis_conn_str).expect("Failed to open redis client");
     let mut connection = client
@@ -34,6 +34,8 @@ async fn main_async() -> anyhow::Result<(), Error> {
         .expect("Failed to get redis connection");
 
     let read_options = StreamReadOptions::default().group(GROUP, "consumer1");
+
+    println!("Starting loop");
     loop {
         connection
             .xread_options(&[STREAM_KEY], &[">"], &read_options)
