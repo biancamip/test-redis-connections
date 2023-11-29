@@ -31,12 +31,6 @@ async fn main_async() -> anyhow::Result<(), Error> {
         .await
         .expect("Failed to get redis connection");
 
-    let result: String = redis::cmd("PING")
-        .query_async(&mut connection)
-        .await
-        .expect("Failed to ping redis server");
-    println!("{} should be PONG", result);
-
     loop {
         let mut fields = vec![];
         fields.push(("timestamp", Utc::now().timestamp_millis()));
